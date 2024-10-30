@@ -22,6 +22,11 @@ public class Product {
         this.waitlist = new LinkedList<>();
     }
 
+    // Add this method to access the actual waitlist queue
+    public Queue<String> getWaitlistQueue() {
+        return waitlist;
+    }
+
     public void addToWaitlist(String clientID) {
         waitlist.add(clientID);
     }
@@ -34,7 +39,7 @@ public class Product {
         }
     }    
 
-    public String getWaitlist() {
+   public String getWaitlist() {
         return waitlist.toString();
     }
 
@@ -113,3 +118,4 @@ public class Product {
         return name;
     }
 }
+

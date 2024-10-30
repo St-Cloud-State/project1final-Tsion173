@@ -136,23 +136,57 @@ public class WarehouseConsole {
     }
 
     private void receiveProductShipment(Scanner scanner) {
-        System.out.print("Enter product number to receive shipment: ");
-        int productIndex = scanner.nextInt();
-        scanner.nextLine(); 
-    
-        System.out.print("Enter quantity received: ");
-        int quantity = scanner.nextInt();
-        scanner.nextLine(); 
-    
-        Product product = getProductByIndex(productIndex);
-        if (product != null) {
-            product.addToQuantity(quantity);
-            product.fulfillWaitlist(quantity);
-            System.out.println("Received shipment of " + quantity + " for product: " + product.getName());
-        } else {
-            System.out.println("Product not found.");
+    System.out.print("Enter product number to receive shipment: ");
+    int productIndex = scanner.nextInt();
+    scanner.nextLine(); 
+
+    System.out.print("Enter quantity received: ");
+    int quantity = scanner.nextInt();
+    scanner.nextLine(); 
+
+    Product product = getProductByIndex(productIndex);
+    if (product != null) {
+        product.addToQuantity(quantity);
+        System.out.println("Received shipment of " + quantity + " for product: " + product.getName());
+
+        // Fulfill waitlist with the updated quantity
+        fulfillWaitlist(product);
+    } else {
+        System.out.println("Product not found.");
+    }
+}
+
+private void fulfillWaitlist(Product product) {
+    while (product.getQuantity() > 0 && !product.getWaitlistQueue().isEmpty()) {
+        String clientId = product.getWaitlistQueue().poll(); // Get next client on the waitlist
+        Client client = clientList.search(clientId);
+
+        if (client != null) {
+            Wishlist wishlist = client.getWishlist();
+            Integer desiredQty = wishlist.getProductsWithQuantities().getOrDefault(product, 0);
+
+            if (desiredQty <= product.getQuantity()) {
+                // Fulfill entire quantity and update product and wishlist
+                product.addToQuantity(-desiredQty);
+                wishlist.removeProduct(product);
+                System.out.println("Fulfilled waitlist for client " + client.getName() + ": " + desiredQty + " of " + product.getName());
+            } else {
+                // Partially fulfill the order and update remaining desired quantity in wishlist
+                wishlist.getProductsWithQuantities().put(product, desiredQty - product.getQuantity());
+                System.out.println("Partial fulfillment for client " + client.getName() + ": " + product.getQuantity() + " of " + product.getName());
+                product.addToQuantity(-product.getQuantity()); // All available quantity is allocated
+            }
         }
     }
+
+    if (product.getQuantity() > 0) {
+        System.out.println("Remaining stock after fulfilling waitlist: " + product.getQuantity());
+    } else {
+        System.out.println("All available stock was used to fulfill the waitlist.");
+    }
+}
+
+
 
     private void manageClientWishlist(Scanner scanner) {
         System.out.println("Which client do you want to manage: ");
@@ -463,6 +497,27 @@ public class WarehouseConsole {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public void testWarehouseConsole() {
         Scanner scanner = new Scanner(System.in);
         
@@ -534,5 +589,12 @@ public class WarehouseConsole {
         displayProducts();
     }
     
+    public static void main(String[] args) {
+        WarehouseConsole app = new WarehouseConsole();
+        app.showMainMenu();
+
+        //app.testWarehouseConsole();
+    }
+
 
 }
